@@ -85,7 +85,7 @@ class _GalleryAccessState extends State<GalleryAccess> {
   }
 
   // Here we apply the sketch
-  Future<void> skecheEffect() async {
+  Future<void> sketchEffect() async {
     if (galleryFile == null) return;
 
     // 1. Load image into opencv
@@ -137,19 +137,23 @@ class _GalleryAccessState extends State<GalleryAccess> {
                     child: const Text('Select Image from Gallery or Camera'),
                     onPressed:() {
                       _pickImage(context: context);
+                    const SizedBox(height: 4, width: 10);
                     },
                   ),
 
                   // The position of the button('Select Image')
-                  const SizedBox(height: 20,),
 
                   // Size of the selected image
                   SizedBox(  
-                    height: 200.0,
-                    width: 300.0,
+                    height: 738,
+                    width: 500.0,
                     child: galleryFile == null
                         ? const Center(child: Text('Sorry nothing selected!!'))
                         : Center(child: Image.file(galleryFile!)),
+                  ),
+                  ElevatedButton(
+                    onPressed: sketchEffect, 
+                    child: const Text("Apply Sketch Effect"),
                   ),
                 ],
               ),
