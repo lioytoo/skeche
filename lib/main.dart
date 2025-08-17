@@ -2,6 +2,7 @@ import 'dart:io'; // Required for File operations
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
+import 'theme/theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,8 +17,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Skeche',
-      darkTheme: ThemeData.dark(),
       home: const GalleryAccess(),
+      theme: lightMode,
+      darkTheme: darkMode,
       debugShowCheckedModeBanner: false,
     );
   }
@@ -30,13 +32,19 @@ class GalleryAccess extends StatefulWidget {
   @override
   State<GalleryAccess> createState() => _GalleryAccessState();
 }
-//d
+
 
 class _GalleryAccessState extends State<GalleryAccess> {
-  File? galleryFile;
+  File? galleryFile;        // original
+  File? sketchFile;         // processed
+  bool showSketch = false;  // toggle between them
 
   final picker = ImagePicker();
-  
+
+  double _blurValue = 21;   // detail level (lernel size)
+  double _scaleValue = 256; // intensity of division
+
+
   Future getImage(ImageSource img,) async {
     // pick image from gallery
     final pickedFile = await picker.pickImage(source: img);
@@ -98,13 +106,13 @@ class _GalleryAccessState extends State<GalleryAccess> {
     final inverted = cv.bitwiseNOT(gray);
 
     // .4 Blur the inverted image
-    final blur = cv.gaussianBlur(inverted, (21, 21), 0);
+    final blur = cv.gaussianBlur(inverted, (_blurValue.toInt(), _blurValue.toInt()), 0);
 
     // 5. invert the blured image
     final invertedBlur = cv.bitwiseNOT(blur);
 
     // 6. Create sketch by dividing gray by invertedBlur
-    final sketch = cv.divide(gray, invertedBlur, scale: 256);
+    final sketch = cv.divide(gray, invertedBlur, scale: _scaleValue);
 
     // 7. Save result to temp file
     final outPath = '${galleryFile!.parent.path}/sketch.png';
@@ -119,9 +127,10 @@ class _GalleryAccessState extends State<GalleryAccess> {
   @override
     Widget build(BuildContext context) {
       return Scaffold(
+        backgroundColor: const Color.fromARGB(255, 42, 45, 50),
         appBar: AppBar(
           title: const Text('Gallery Access and Camera'),
-          backgroundColor: const Color.fromARGB(221, 13, 13, 13),
+          backgroundColor: Colors.black,
           foregroundColor: Colors.white,
         ),
         body: Builder(
@@ -137,23 +146,57 @@ class _GalleryAccessState extends State<GalleryAccess> {
                     child: const Text('Select Image from Gallery or Camera'),
                     onPressed:() {
                       _pickImage(context: context);
-                    const SizedBox(height: 4, width: 10);
                     },
                   ),
-
-                  // The position of the button('Select Image')
-
                   // Size of the selected image
-                  SizedBox(  
-                    height: 738,
+                  SizedBox(
+                    height: 300,
                     width: 500.0,
                     child: galleryFile == null
-                        ? const Center(child: Text('Sorry nothing selected!!'))
-                        : Center(child: Image.file(galleryFile!)),
+                        ? const Center(child: Text('Sorry nothing selected!!',
+                            style: TextStyle(color: Colors.white),
+                            ),
+                          )
+                        : Center(
+                            child: Image.file(
+                              showSketch && sketchFile != null ? sketchFile! : galleryFile!,
+                            ),
+                          ),
+                  ),
+                  Slider(
+                    value: _blurValue,
+                    min: 1,
+                    max: 51,
+                    divisions: 25,
+                    label: "Detail: ${_blurValue.toInt()}",
+                    onChanged: (val) {
+                      setState(() => _blurValue.toInt);
+                      sketchEffect(); //re apply
+                    },
+                  ),
+                  Slider(
+                    value: _scaleValue,
+                    min: 50,
+                    max: 500,
+                    divisions: 45,
+                    label: "Intensity: ${_scaleValue.toInt()}",
+                    onChanged: (val) {
+                      setState(() => _scaleValue = val);
+                      sketchEffect(); //re apply
+                    },
                   ),
                   ElevatedButton(
                     onPressed: sketchEffect, 
                     child: const Text("Apply Sketch Effect"),
+                  ),
+                  // This button switches between the original image and the image that has the sketch effect applied
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        showSketch = !showSketch;
+                      });
+                    },
+                    child: Text(showSketch ? "Show Original" : "Show Skecth"), 
                   ),
                 ],
               ),
