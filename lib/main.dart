@@ -282,10 +282,10 @@ class _GalleryAccessState extends State<GalleryAccess> {
                       foregroundColor: Colors.white,
                       minimumSize: const Size(160, 40), // width: 160, height: 40
                     ),
-                    child: const Text("Apply Changes"),
                     onPressed: _isProcessing ? null : () async {
                       await applyAdjustments();
                     },
+                    child: const Text("Apply Changes"),
                   ),
 
                   // Apply the sketch effect (toggle only: user must press Apply Changes)
