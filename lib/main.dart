@@ -225,7 +225,7 @@ class _GalleryAccessState extends State<GalleryAccess> {
                           ),
                   ),
 
-                  // Detail scroll bar - no logic yet
+                  // Detail scroll bar
                   Slider(
                     value: _blurValue,    // current slider posotion (must be double)
                     min: 1,
@@ -280,23 +280,22 @@ class _GalleryAccessState extends State<GalleryAccess> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueGrey,
                       foregroundColor: Colors.white,
-                      minimumSize: const Size(160, 40),
+                      minimumSize: const Size(160, 40), // width: 160, height: 40
                     ),
                     child: const Text("Apply Changes"),
-                    onPressed: () async {
+                    onPressed: _isProcessing ? null : () async {
                       await applyAdjustments();
                     },
                   ),
 
-                  // Apply the sketch effect
+                  // Apply the sketch effect (toggle only: user must press Apply Changes)
                   ElevatedButton(
                     onPressed:() {
                       setState(() {
                         sketchEffect = !sketchEffect;
                       });
                     }, 
-                    
-                    child: const Text("Apply Sketch Effect"),
+                    child: Text(sketchEffect ? "Sketch: ON" : "Sketch: OFF"),
                   ),
                   
                   // This button switches between the original image and the image that has the sketch effect applied
