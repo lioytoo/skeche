@@ -60,7 +60,7 @@ class _GalleryAccessState extends State<GalleryAccess> {
     try {
       // copy the picked file to create a stable "original" copy we can reuse
       final srcFile = File(pickedFile.path);
-      final ext = pickedFile.path.contains('.') ? '.${pickedFile.path.split('.').last}' : 'png';
+      final ext = pickedFile.path.contains('.') ? '.${pickedFile.path.split('.').last}' : '.png';
       final copyPath =
         '${srcFile.parent.path}/original_${DateTime.now().millisecondsSinceEpoch}$ext';
       originalFile = await srcFile.copy(copyPath);
@@ -159,11 +159,12 @@ class _GalleryAccessState extends State<GalleryAccess> {
     }
 
     // 3) Write result to a working file (overwrites the previous file name)
-    final outPath = '${originalFile!.parent.path}/working.png';
+    final outPath = '${originalFile!.parent.path}/working_${DateTime.now().millisecondsSinceEpoch}.png';
     cv.imwrite(outPath, processed);
 
     setState(() {
       workingFile = File(outPath); // show new processed copy
+      showSketch = true;
     });
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -250,7 +251,6 @@ class _GalleryAccessState extends State<GalleryAccess> {
                   ),
 
                   
-                  
                   // Brightness
                   Slider(
                     value: _brightnessValue,
@@ -294,7 +294,7 @@ class _GalleryAccessState extends State<GalleryAccess> {
                       setState(() {
                         sketchEffect = !sketchEffect;
                       });
-                    }, 
+                    },
                     child: Text(sketchEffect ? "Sketch: ON" : "Sketch: OFF"),
                   ),
                   
