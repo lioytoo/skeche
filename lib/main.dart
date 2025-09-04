@@ -1,6 +1,7 @@
 import 'dart:io'; // Required for File operations
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 
@@ -82,6 +83,34 @@ class _GalleryAccessState extends State<GalleryAccess> {
     }
   }
 
+  Future<void> exportImage() async {
+    final fileToExport = workingFile;
+    if (fileToExport == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No image to export')),
+      );
+      return;
+    }
+
+    setState(() => _isProcessing = true);
+    // allow UI to show loader
+    await Future.delayed(const Duration(milliseconds: 50));
+    if (context.mounted) {
+      try {
+        // Use share_plus to let user save/share the file to other apps
+        await SharePlus.instance.share(ShareParams(text: 'Processed image from sketche',
+        files: [XFile('${fileToExport.path}/image.png')]),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      } finally {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
   void _pickImage({required BuildContext context}) {
 
     showModalBottomSheet(
@@ -131,7 +160,7 @@ class _GalleryAccessState extends State<GalleryAccess> {
       workingFile = null;
     }
 
-    // Read from tje saved original copy
+    // Read from the saved original copy
     final src = cv.imread(originalFile!.path);
 
     // 1) Apply brightness + contrast first to the original image
@@ -181,7 +210,7 @@ class _GalleryAccessState extends State<GalleryAccess> {
   @override
     Widget build(BuildContext context) {
       return Scaffold(
-        backgroundColor: const Color.fromARGB(255, 42, 45, 50),
+        backgroundColor: const Color(0x00444444),
         appBar: AppBar(
           title: const Text('Gallery Access and Camera'),
           backgroundColor: Colors.black,
@@ -209,7 +238,7 @@ class _GalleryAccessState extends State<GalleryAccess> {
 
                   // Size of the selected image
                   SizedBox(
-                    height: 300,
+                    height: 250,
                     width: 500.0,
                     child: originalFile == null
                         ? const Center(child: Text('Sorry nothing selected!!',
@@ -306,6 +335,18 @@ class _GalleryAccessState extends State<GalleryAccess> {
                       });
                     },
                     child: Text(showSketch ? "Show Original" : "Show Sketch"), 
+                  ),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(160, 40),
+                    ),
+                    onPressed: _isProcessing ? null : () async {
+                      await exportImage();
+                    },
+                    child: const Text('Export Image'),
                   ),
                 ],
               ),
